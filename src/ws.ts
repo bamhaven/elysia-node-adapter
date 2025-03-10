@@ -181,16 +181,22 @@ export const attachWebSocket = (
 			if (qi !== -1) path = request.url!.substring(0, qi)
 
 			const index = staticWsRouter[path]
-			if (index === undefined) return
 
-			const route = history[index]
+			const route = index === undefined ? history.find((item) => item.path === path && item.method === '$INTERNALWS') : history[index]
 			if (!route) {
-				router.find('$INTERNALWS', path)
+				request.destroy()
 				return
 			}
 
-			if (!route.websocket) return
-			const websocket: AnyWSLocalHook = route.websocket
+			if (!route.handler) {
+				request.destroy()
+				return
+			}
+			const websocket: AnyWSLocalHook = route.handler
+			if (!websocket) {
+				request.destroy()
+				return
+			}
 
 			const validateMessage = getSchemaValidator(route.hooks.body, {
 				// @ts-expect-error private property
@@ -296,7 +302,7 @@ export const attachWebSocket = (
 
 			if (websocket.message)
 				ws.on('message', async (_message) => {
-					const message = await parseMessage(elysiaWS, _message)
+					const message = await parseMessage(elysiaWS, _message.toString())
 
 					if (validateMessage?.Check(message) === false)
 						return void ws.send(

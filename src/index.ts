@@ -266,9 +266,8 @@ export const node = () => {
 			websocket() {
 				let fnLiteral = ''
 				fnLiteral +=
-					`if (r.headers['upgrade'] === "websocket"){\n` +
-					`app.server.then((serv) => serv.raw.emit("upgrade", r, r.socket, Buffer.alloc(0)))\n` +
-					`return;}`
+					`if (r.headers['upgrade'] === "websocket" && r.method === 'GET'){` +
+					`app.server.then((serv) => serv.raw.emit("upgrade", r, r.socket, Buffer.alloc(0)));return;}\n`
 				return fnLiteral
 			},
 			error404(hasEventHook, hasErrorHook) {
@@ -311,7 +310,7 @@ export const node = () => {
 				`return [error.message, context.set]`
 		},
 		ws(app, path, options) {
-			const key = Object.keys(app.router.static.ws).length
+			const key = Object.keys(app.router.history).length
 			app.router.static.ws[path] = key
 
 			const lifecycle = mergeLifeCycle(options, {})
@@ -320,9 +319,8 @@ export const node = () => {
 				method: '$INTERNALWS',
 				path,
 				composed: undefined as any,
-				handler: undefined as any,
+				handler: options as any,
 				hooks: lifecycle,
-				websocket: options
 			})
 			app.router.http.history.push(['$INTERNALWS', path, options])
 		},
