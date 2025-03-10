@@ -264,7 +264,12 @@ export const node = () => {
 				return fnLiteral
 			},
 			websocket() {
-				return ''
+				let fnLiteral = ''
+				fnLiteral +=
+					`if (r.headers['upgrade'] === "websocket"){\n` +
+					`app.server.then((serv) => serv.raw.emit("upgrade", r, r.socket, Buffer.alloc(0)))\n` +
+					`return;}`
+				return fnLiteral
 			},
 			error404(hasEventHook, hasErrorHook) {
 				let findDynamicRoute = `if(route===null){`
